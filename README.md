@@ -1,9 +1,9 @@
-# RMIME Converter
+# MIME Converter
 
 Небольшое статическое веб-приложение для конвертации MIME encoded-word (RFC 2047):
 
-- из заголовка `=?UTF-8?B?...?=` в текст
-- из текст обратно в MIME/Base64 заголовок
+- из MIME encoded-word (RFC 2047)` в текст
+- из текст в MIME encoded-word (RFC 2047)
 
 Приложение не требует сборки и подходит для GitHub Pages.
 
