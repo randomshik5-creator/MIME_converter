@@ -14,6 +14,11 @@ const encodeNav = document.getElementById("encodeNav");
 const mimePrefix = "=?UTF-8?B?";
 const mimeSuffix = "?=";
 
+document.getElementById("decodeSwapButton").addEventListener("click", swapDecodeFields);
+document.getElementById("decodeClearButton").addEventListener("click", clearDecodeFields);
+document.getElementById("encodeSwapButton").addEventListener("click", swapEncodeFields);
+document.getElementById("encodeClearButton").addEventListener("click", clearEncodeFields);
+
 decodeInput.addEventListener("input", handleDecodeInput);
 decodeInput.addEventListener("paste", () => setTimeout(handleDecodeInput, 0));
 encodeInput.addEventListener("input", handleEncodeInput);
@@ -59,6 +64,28 @@ function handleEncodeInput() {
     encodeOutput.value = "";
     renderError(encodeStatus, error.message);
   }
+}
+
+function clearDecodeFields() {
+  decodeInput.value = "";
+  decodeOutput.value = "";
+  renderState(decodeStatus, decodeCounter, "Поля очищены.", 0);
+}
+
+function clearEncodeFields() {
+  encodeInput.value = "";
+  encodeOutput.value = "";
+  renderState(encodeStatus, encodeCounter, "Поля очищены.", 0);
+}
+
+function swapDecodeFields() {
+  decodeInput.value = decodeOutput.value;
+  handleDecodeInput();
+}
+
+function swapEncodeFields() {
+  encodeInput.value = encodeOutput.value;
+  handleEncodeInput();
 }
 
 function decodeRoles(rawInput) {

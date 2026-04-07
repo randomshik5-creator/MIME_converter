@@ -118,6 +118,13 @@ h1 {
   margin-bottom: 20px;
 }
 
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -135,6 +142,24 @@ h1 {
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+button {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(60, 49, 29, 0.28);
 }
 
 .hint,
@@ -171,6 +196,7 @@ textarea {
 }
 
 textarea:focus,
+.toolbar button:focus,
 .mode-link:focus {
   outline: 2px solid rgba(170, 63, 34, 0.35);
   outline-offset: 2px;
