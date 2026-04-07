@@ -1,13 +1,13 @@
 :root {
-  --bg: #12161d;
-  --bg-accent: #1f2733;
-  --card: rgba(24, 30, 40, 0.88);
-  --text: #edf3ff;
-  --muted: #9ba8bd;
-  --line: rgba(180, 197, 222, 0.14);
-  --primary: #f08a5d;
-  --danger: #ff8d7a;
-  --shadow: 0 24px 60px rgba(3, 8, 18, 0.38);
+  --bg: #0f0f0f;
+  --bg-accent: #181818;
+  --card: rgba(33, 33, 33, 0.94);
+  --text: #f1f1f1;
+  --muted: #aaaaaa;
+  --line: rgba(255, 255, 255, 0.12);
+  --primary: #ff0000;
+  --danger: #ff6b6b;
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
   --radius: 24px;
 }
 
@@ -72,7 +72,7 @@ body.theme-light {
   padding: 12px 18px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text);
   text-decoration: none;
   transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
@@ -80,13 +80,13 @@ body.theme-light {
 
 .mode-link:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(60, 49, 29, 0.28);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .mode-link.active {
   background: var(--primary);
-  color: #fff9f0;
+  color: #ffffff;
   border-color: transparent;
 }
 
@@ -156,7 +156,7 @@ button {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text);
   cursor: pointer;
   font: inherit;
@@ -165,8 +165,8 @@ button {
 
 button:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 button:disabled {
@@ -213,7 +213,7 @@ button:disabled {
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid var(--line);
-  background: rgba(12, 17, 24, 0.85);
+  background: #0f0f0f;
 }
 
 body.theme-light .editor {
