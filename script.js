@@ -7,6 +7,7 @@ const decodePage = document.getElementById("decodePage");
 const encodePage = document.getElementById("encodePage");
 const decodeNav = document.getElementById("decodeNav");
 const encodeNav = document.getElementById("encodeNav");
+const storageKey = "mime-converter-state-v1";
 
 let decodeInputEditor;
 let decodeOutputEditor;
@@ -32,11 +33,12 @@ window.MonacoEnvironment = {
 require(["vs/editor/editor.main"], () => {
   initEditors();
   initActions();
+  restoreState();
   syncPageFromHash();
   handleDecodeInput();
   handleEncodeInput();
   window.addEventListener("resize", layoutEditors);
-  window.addEventListener("hashchange", syncPageFromHash);
+  window.addEventListener("hashchange", handleHashChange);
 });
 
 function initEditors() {
@@ -48,13 +50,21 @@ function initEditors() {
   decodeInputEditor.onDidChangeModelContent(() => {
     handleDecodeInput();
     updateJsonButtons();
+    persistState();
   });
-  decodeOutputEditor.onDidChangeModelContent(updateJsonButtons);
+  decodeOutputEditor.onDidChangeModelContent(() => {
+    updateJsonButtons();
+    persistState();
+  });
   encodeInputEditor.onDidChangeModelContent(() => {
     handleEncodeInput();
     updateJsonButtons();
+    persistState();
   });
-  encodeOutputEditor.onDidChangeModelContent(updateJsonButtons);
+  encodeOutputEditor.onDidChangeModelContent(() => {
+    updateJsonButtons();
+    persistState();
+  });
 }
 
 function createEditor(containerId, language, editable, placeholder) {
@@ -167,6 +177,7 @@ function moveDecodeOutputToEncodeInput() {
   window.location.hash = "#encode";
   setEditorValue(encodeInputEditor, output, detectEditorLanguage(output));
   handleEncodeInput();
+  persistState();
   encodeInputEditor.focus();
 }
 
@@ -175,6 +186,7 @@ function moveEncodeOutputToDecodeInput() {
   window.location.hash = "#decode";
   setEditorValue(decodeInputEditor, output, "plaintext");
   handleDecodeInput();
+  persistState();
   decodeInputEditor.focus();
 }
 
@@ -183,6 +195,7 @@ function clearDecodeFields() {
   setEditorValue(decodeOutputEditor, "", "plaintext");
   renderState(decodeStatus, "Поля очищены.");
   updateJsonButtons();
+  persistState();
 }
 
 function clearEncodeFields() {
@@ -190,6 +203,7 @@ function clearEncodeFields() {
   setEditorValue(encodeOutputEditor, "", "plaintext");
   renderState(encodeStatus, "Поля очищены.");
   updateJsonButtons();
+  persistState();
 }
 
 function decodeMimeToText(rawInput) {
@@ -300,6 +314,11 @@ function syncPageFromHash() {
   layoutEditors();
 }
 
+function handleHashChange() {
+  syncPageFromHash();
+  persistState();
+}
+
 function layoutEditors() {
   if (decodeInputEditor) {
     decodeInputEditor.layout();
@@ -317,4 +336,54 @@ function renderState(statusNode, message) {
 function renderError(statusNode, message) {
   statusNode.textContent = message;
   statusNode.classList.add("error");
+}
+
+function persistState() {
+  if (!decodeInputEditor || !encodeInputEditor) {
+    return;
+  }
+
+  const state = {
+    activeHash: window.location.hash === "#encode" ? "#encode" : "#decode",
+    decodeInput: decodeInputEditor.getValue(),
+    decodeOutput: decodeOutputEditor.getValue(),
+    encodeInput: encodeInputEditor.getValue(),
+    encodeOutput: encodeOutputEditor.getValue(),
+  };
+
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  } catch (error) {
+    // Ignore storage failures silently to avoid breaking the tool.
+  }
+}
+
+function restoreState() {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) {
+      return;
+    }
+
+    const state = JSON.parse(raw);
+
+    if (typeof state.decodeInput === "string") {
+      setEditorValue(decodeInputEditor, state.decodeInput, detectEditorLanguage(state.decodeInput));
+    }
+    if (typeof state.decodeOutput === "string") {
+      setEditorValue(decodeOutputEditor, state.decodeOutput, detectEditorLanguage(state.decodeOutput));
+    }
+    if (typeof state.encodeInput === "string") {
+      setEditorValue(encodeInputEditor, state.encodeInput, detectEditorLanguage(state.encodeInput));
+    }
+    if (typeof state.encodeOutput === "string") {
+      setEditorValue(encodeOutputEditor, state.encodeOutput, detectEditorLanguage(state.encodeOutput));
+    }
+
+    if (state.activeHash === "#encode" || state.activeHash === "#decode") {
+      window.location.hash = state.activeHash;
+    }
+  } catch (error) {
+    // Ignore malformed stored data and continue with defaults.
+  }
 }
