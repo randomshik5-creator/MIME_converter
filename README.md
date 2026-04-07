@@ -11,7 +11,7 @@
 
 - MIME encoded-word (RFC 2047)
 - Текст
-- JSI+ON
+- JSON
 
 ## Доп. функции
 
