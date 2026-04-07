@@ -542,7 +542,12 @@ html.theme-light body .editor {
 
 .mode-link:focus,
 button:focus {
-  outline: 2px solid rgba(195, 94, 43, 0.4);
+  outline: none;
+}
+
+.mode-link:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgba(86, 122, 168, 0.42);
   outline-offset: 2px;
 }
 
