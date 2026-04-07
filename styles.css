@@ -199,19 +199,10 @@ button:disabled {
   stroke-linejoin: round;
 }
 
-.json-glyph {
-  display: inline-block;
-  font-family: Consolas, "Courier New", monospace;
-  font-size: 1.02rem;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
 /* Keep disabled formatting/copy/paste buttons with same border/background,
    but dim only icon/glyph so state is still clear. */
 .icon-button:disabled .tool-icon,
-.icon-button:disabled .json-glyph {
+.icon-button:disabled span {
   opacity: 0.52;
 }
 
