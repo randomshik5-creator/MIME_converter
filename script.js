@@ -15,6 +15,8 @@ document.getElementById("sampleButton").addEventListener("click", handleSample);
 document.getElementById("clearButton").addEventListener("click", handleClear);
 document.getElementById("copyButton").addEventListener("click", () => copyText(outputText.value));
 document.getElementById("pasteButton").addEventListener("click", pasteText);
+inputText.addEventListener("input", handleAutoConvert);
+inputText.addEventListener("paste", handleDeferredAutoConvert);
 
 function handleDecode() {
   try {
@@ -41,13 +43,12 @@ function handleSwap() {
   const previousInput = inputText.value;
   inputText.value = outputText.value;
   outputText.value = previousInput;
-  renderState("Поля поменяны местами.", countRolesGuess(inputText.value));
+  handleAutoConvert();
 }
 
 function handleSample() {
   inputText.value = sampleHeader;
-  outputText.value = "";
-  renderState("Пример загружен.", 0);
+  handleAutoConvert();
 }
 
 function handleClear() {
@@ -74,10 +75,40 @@ async function pasteText() {
   try {
     const text = await navigator.clipboard.readText();
     inputText.value = text;
-    renderState("Текст вставлен из буфера обмена.", countRolesGuess(text));
+    handleAutoConvert();
   } catch (error) {
     renderError("Не удалось вставить текст из буфера обмена. Вставьте вручную.");
   }
+}
+
+function handleAutoConvert() {
+  const normalized = inputText.value.trim();
+
+  if (!normalized) {
+    outputText.value = "";
+    renderState("Готово к работе.", 0);
+    return;
+  }
+
+  try {
+    if (looksLikeEncodedHeader(normalized)) {
+      const parsed = decodeRoles(normalized);
+      outputText.value = parsed.roles.join("\n");
+      renderState(`Распознан заголовок. Найдено ролей: ${parsed.roles.length}.`, parsed.roles.length);
+      return;
+    }
+
+    const roles = parseRoleInput(normalized);
+    outputText.value = encodeRoles(roles);
+    renderState(`Распознан список ролей. Заголовок собран для ${roles.length} ролей.`, roles.length);
+  } catch (error) {
+    outputText.value = "";
+    renderError(error.message);
+  }
+}
+
+function handleDeferredAutoConvert() {
+  setTimeout(handleAutoConvert, 0);
 }
 
 function decodeRoles(rawInput) {
@@ -151,6 +182,18 @@ function extractBase64(value) {
   }
 
   return value;
+}
+
+function looksLikeEncodedHeader(value) {
+  if (/^=\?UTF-8\?B\?.+\?=$/i.test(value)) {
+    return true;
+  }
+
+  if (value.startsWith("[") || value.includes("\n")) {
+    return false;
+  }
+
+  return /^[A-Za-z0-9+/=]+$/.test(value);
 }
 
 function uniqueRoles(roles) {
