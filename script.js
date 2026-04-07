@@ -7,6 +7,8 @@ const decodePage = document.getElementById("decodePage");
 const encodePage = document.getElementById("encodePage");
 const decodeNav = document.getElementById("decodeNav");
 const encodeNav = document.getElementById("encodeNav");
+const themeToggleButton = document.getElementById("themeToggleButton");
+const themeToggleIcon = document.getElementById("themeToggleIcon");
 const storageKey = "mime-converter-state-v1";
 
 let decodeInputEditor;
@@ -31,6 +33,7 @@ window.MonacoEnvironment = {
 };
 
 require(["vs/editor/editor.main"], () => {
+  applyTheme(loadThemePreference());
   initEditors();
   initActions();
   restoreState();
@@ -71,7 +74,7 @@ function createEditor(containerId, language, editable, placeholder) {
   return monaco.editor.create(document.getElementById(containerId), {
     value: "",
     language,
-    theme: "vs",
+    theme: getMonacoTheme(),
     automaticLayout: true,
     minimap: { enabled: false },
     lineNumbers: "on",
@@ -93,6 +96,7 @@ function initActions() {
   document.getElementById("decodeClearButton").addEventListener("click", clearDecodeFields);
   document.getElementById("encodeSwapButton").addEventListener("click", moveEncodeOutputToDecodeInput);
   document.getElementById("encodeClearButton").addEventListener("click", clearEncodeFields);
+  themeToggleButton.addEventListener("click", toggleTheme);
 
   bindJsonButton("decodeInputFormatButton", decodeInputEditor, "format");
   bindJsonButton("decodeInputMinifyButton", decodeInputEditor, "minify");
@@ -338,6 +342,39 @@ function renderError(statusNode, message) {
   statusNode.classList.add("error");
 }
 
+function loadThemePreference() {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) {
+      return "dark";
+    }
+    const state = JSON.parse(raw);
+    return state.theme === "light" ? "light" : "dark";
+  } catch (error) {
+    return "dark";
+  }
+}
+
+function toggleTheme() {
+  const nextTheme = document.body.classList.contains("theme-light") ? "dark" : "light";
+  applyTheme(nextTheme);
+  persistState();
+}
+
+function applyTheme(theme) {
+  document.body.classList.toggle("theme-light", theme === "light");
+  if (themeToggleIcon) {
+    themeToggleIcon.textContent = theme === "light" ? "☾" : "☀";
+  }
+  if (typeof monaco !== "undefined") {
+    monaco.editor.setTheme(getMonacoTheme());
+  }
+}
+
+function getMonacoTheme() {
+  return document.body.classList.contains("theme-light") ? "vs" : "vs-dark";
+}
+
 function persistState() {
   if (!decodeInputEditor || !encodeInputEditor) {
     return;
@@ -349,6 +386,7 @@ function persistState() {
     decodeOutput: decodeOutputEditor.getValue(),
     encodeInput: encodeInputEditor.getValue(),
     encodeOutput: encodeOutputEditor.getValue(),
+    theme: document.body.classList.contains("theme-light") ? "light" : "dark",
   };
 
   try {
@@ -383,6 +421,8 @@ function restoreState() {
     if (state.activeHash === "#encode" || state.activeHash === "#decode") {
       window.location.hash = state.activeHash;
     }
+
+    applyTheme(state.theme === "light" ? "light" : "dark");
   } catch (error) {
     // Ignore malformed stored data and continue with defaults.
   }
