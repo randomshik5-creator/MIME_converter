@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MIME Converter</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='50' font-size='52'%3E%F0%9F%94%84%3C/text%3E%3C/svg%3E">
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem("mime-converter-state-v1");
+        var theme = "dark";
+        if (raw) {
+          var state = JSON.parse(raw);
+          if (state && state.theme === "light") {
+            theme = "light";
+          }
+        }
+        if (theme === "light") {
+          document.documentElement.classList.add("theme-light");
+        }
+      } catch (error) {
+        // Ignore and fall back to default dark theme.
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>

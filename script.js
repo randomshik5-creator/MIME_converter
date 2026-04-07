@@ -362,6 +362,7 @@ function toggleTheme() {
 }
 
 function applyTheme(theme) {
+  document.documentElement.classList.toggle("theme-light", theme === "light");
   document.body.classList.toggle("theme-light", theme === "light");
   if (themeToggleIcon) {
     themeToggleIcon.textContent = theme === "light" ? "☾" : "☀";

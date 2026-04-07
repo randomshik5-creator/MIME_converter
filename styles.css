@@ -11,7 +11,8 @@
   --radius: 24px;
 }
 
-body.theme-light {
+body.theme-light,
+html.theme-light body {
   --bg: #f3efe5;
   --bg-accent: #e4d6b8;
   --card: rgba(255, 250, 241, 0.9);
@@ -35,7 +36,8 @@ body {
   background: var(--bg);
 }
 
-body.theme-light {
+body.theme-light,
+html.theme-light body {
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 34%),
     radial-gradient(circle at right, rgba(170, 63, 34, 0.12), transparent 30%),
@@ -216,7 +218,8 @@ button:disabled {
   background: #0f0f0f;
 }
 
-body.theme-light .editor {
+body.theme-light .editor,
+html.theme-light body .editor {
   background: rgba(255, 253, 248, 0.92);
 }
 
