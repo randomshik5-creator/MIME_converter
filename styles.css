@@ -3,6 +3,7 @@
   --bg-accent: #181818;
   --card: rgba(33, 33, 33, 0.94);
   --text: #f1f1f1;
+  --icon-color: #f1f1f1;
   --muted: #aaaaaa;
   --line: rgba(255, 255, 255, 0.12);
   --primary: #3ea6ff;
@@ -17,6 +18,7 @@ html.theme-light body {
   --bg-accent: #e4d6b8;
   --card: rgba(255, 250, 241, 0.9);
   --text: #1e1d1a;
+  --icon-color: #1e1d1a;
   --muted: #5b584f;
   --line: rgba(60, 49, 29, 0.15);
   --primary: #aa3f22;
@@ -185,6 +187,7 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: var(--icon-color);
   font-family: Consolas, "Courier New", monospace;
   font-size: 0.86rem;
 }
@@ -192,11 +195,34 @@ button:disabled {
 .tool-icon {
   width: 20px;
   height: 20px;
-  stroke: currentColor;
-  stroke-width: 1.45;
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-button[id$="PasteButton"] .tool-icon {
+  -webkit-mask-image: url("./assets/icons/paste-svgrepo-com.svg");
+  mask-image: url("./assets/icons/paste-svgrepo-com.svg");
+}
+
+.icon-button[id$="CopyButton"] .tool-icon {
+  -webkit-mask-image: url("./assets/icons/copy-2-svgrepo-com.svg");
+  mask-image: url("./assets/icons/copy-2-svgrepo-com.svg");
+}
+
+.icon-button[id$="FormatButton"] .tool-icon {
+  -webkit-mask-image: url("./assets/icons/format-space-more-svgrepo-com.svg");
+  mask-image: url("./assets/icons/format-space-more-svgrepo-com.svg");
+}
+
+.icon-button[id$="MinifyButton"] .tool-icon {
+  -webkit-mask-image: url("./assets/icons/format-space-less-svgrepo-com.svg");
+  mask-image: url("./assets/icons/format-space-less-svgrepo-com.svg");
 }
 
 /* Keep disabled formatting/copy/paste buttons with same border/background,
