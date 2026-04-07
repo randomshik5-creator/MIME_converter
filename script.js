@@ -500,20 +500,23 @@ function registerThemeToggleClick() {
 
   if (themeClickTimestamps.length >= secretClickThreshold) {
     themeClickTimestamps = [];
-    enterSpaceMode();
+    enterSpaceMode(getNextStandardTheme());
     return true;
   }
 
   return false;
 }
 
+function getNextStandardTheme(theme = themeState.theme) {
+  return theme === "light" ? defaultTheme : "light";
+}
+
 function toggleTheme() {
-  const nextTheme = themeState.theme === "light" ? "dark" : "light";
+  const nextTheme = getNextStandardTheme();
   applyTheme(nextTheme, nextTheme, 0);
 }
 
-function enterSpaceMode() {
-  const previousTheme = themeState.theme === "light" ? "light" : defaultTheme;
+function enterSpaceMode(previousTheme = themeState.theme === "light" ? "light" : defaultTheme) {
   applyTheme("space", previousTheme, Date.now() + spaceToggleLockDurationMs);
 }
 
