@@ -9,12 +9,20 @@ const decodeNav = document.getElementById("decodeNav");
 const encodeNav = document.getElementById("encodeNav");
 const themeToggleButton = document.getElementById("themeToggleButton");
 const themeToggleIcon = document.getElementById("themeToggleIcon");
+const themeToggleLabel = document.getElementById("themeToggleLabel");
 const storageKey = "mime-converter-state-v1";
+const defaultTheme = "dark";
+const secretClickThreshold = 6;
+const secretClickWindowMs = 3000;
+const spaceToggleLockDurationMs = 3000;
 
 let decodeInputEditor;
 let decodeOutputEditor;
 let encodeInputEditor;
 let encodeOutputEditor;
+let themeState = normalizeThemeState();
+let themeClickTimestamps = [];
+let spaceToggleLockTimerId = 0;
 const monacoRootUrl = new URL("./vendor/monaco/", window.location.href).toString();
 
 require.config({
@@ -33,7 +41,8 @@ window.MonacoEnvironment = {
 };
 
 require(["vs/editor/editor.main"], () => {
-  applyTheme(loadThemePreference());
+  const initialThemeState = loadThemePreference();
+  applyTheme(initialThemeState.theme, initialThemeState.previousTheme, initialThemeState.spaceLockUntil);
   initEditors();
   initActions();
   restoreState();
@@ -96,7 +105,7 @@ function initActions() {
   document.getElementById("decodeClearButton").addEventListener("click", clearDecodeFields);
   document.getElementById("encodeSwapButton").addEventListener("click", moveEncodeOutputToDecodeInput);
   document.getElementById("encodeClearButton").addEventListener("click", clearEncodeFields);
-  themeToggleButton.addEventListener("click", toggleTheme);
+  themeToggleButton.addEventListener("click", handleThemeToggleClick);
 
   bindClipboardButtons("decodeInputPasteButton", "decodeInputCopyButton", decodeInputEditor, handleDecodeInput);
   bindClipboardButtons("decodeOutputPasteButton", "decodeOutputCopyButton", decodeOutputEditor, updateJsonButtons);
@@ -373,41 +382,163 @@ function renderError(statusNode, message) {
   statusNode.classList.add("error");
 }
 
-function loadThemePreference() {
+function readStoredState() {
   try {
     const raw = localStorage.getItem(storageKey);
-    if (!raw) {
-      return "dark";
-    }
-    const state = JSON.parse(raw);
-    return state.theme === "light" ? "light" : "dark";
+    return raw ? JSON.parse(raw) : null;
   } catch (error) {
-    return "dark";
+    return null;
   }
 }
 
-function toggleTheme() {
-  const nextTheme = document.body.classList.contains("theme-light") ? "dark" : "light";
-  applyTheme(nextTheme);
+function normalizeThemeState(rawState = null) {
+  const hasRawState = rawState && typeof rawState === "object";
+  const theme = hasRawState && (rawState.theme === "light" || rawState.theme === "space")
+    ? rawState.theme
+    : defaultTheme;
+  const previousTheme = hasRawState && rawState.previousTheme === "light" ? "light" : defaultTheme;
+  const rawSpaceLockUntil = hasRawState ? Number(rawState.spaceLockUntil) : 0;
+  const spaceLockUntil = theme === "space" && Number.isFinite(rawSpaceLockUntil) && rawSpaceLockUntil > Date.now()
+    ? rawSpaceLockUntil
+    : 0;
+
+  return {
+    theme,
+    previousTheme: theme === "space" ? previousTheme : theme,
+    spaceLockUntil,
+  };
+}
+
+function loadThemePreference() {
+  return normalizeThemeState(readStoredState());
+}
+
+function isSpaceToggleLocked() {
+  return themeState.theme === "space" && themeState.spaceLockUntil > Date.now();
+}
+
+function clearSpaceToggleLockTimer() {
+  if (spaceToggleLockTimerId) {
+    window.clearTimeout(spaceToggleLockTimerId);
+    spaceToggleLockTimerId = 0;
+  }
+}
+
+function scheduleSpaceToggleUnlock() {
+  clearSpaceToggleLockTimer();
+
+  if (!isSpaceToggleLocked()) {
+    return;
+  }
+
+  const remaining = Math.max(0, themeState.spaceLockUntil - Date.now());
+  spaceToggleLockTimerId = window.setTimeout(() => {
+    themeState = normalizeThemeState({
+      theme: themeState.theme,
+      previousTheme: themeState.previousTheme,
+      spaceLockUntil: 0,
+    });
+    syncThemeToggleButton();
+    persistState();
+  }, remaining);
+}
+
+function syncThemeToggleButton() {
+  if (!themeToggleButton) {
+    return;
+  }
+
+  const isLightTheme = themeState.theme === "light";
+  const isSpaceTheme = themeState.theme === "space";
+  const isLocked = isSpaceToggleLocked();
+  const toggleLabel = isSpaceTheme ? "Exit deep space" : "";
+  const toggleTitle = isSpaceTheme ? "Exit deep space" : "Переключить тему";
+
+  themeToggleButton.classList.toggle("theme-toggle-space", isSpaceTheme);
+  themeToggleButton.classList.toggle("theme-toggle-locked", isSpaceTheme && isLocked);
+  themeToggleButton.disabled = isSpaceTheme && isLocked;
+  themeToggleButton.setAttribute("aria-disabled", String(isSpaceTheme && isLocked));
+  themeToggleButton.setAttribute("aria-pressed", String(isLightTheme));
+  themeToggleButton.setAttribute("aria-label", toggleTitle);
+  themeToggleButton.setAttribute("title", toggleTitle);
+
+  if (themeToggleIcon) {
+    themeToggleIcon.textContent = isSpaceTheme ? "" : isLightTheme ? "\u263e" : "\u2600";
+  }
+
+  if (themeToggleLabel) {
+    themeToggleLabel.textContent = toggleLabel;
+  }
+}
+
+function handleThemeToggleClick() {
+  if (themeState.theme === "space") {
+    if (isSpaceToggleLocked()) {
+      return;
+    }
+
+    themeClickTimestamps = [];
+    exitSpaceMode();
+    persistState();
+    return;
+  }
+
+  const didEnterSpaceMode = registerThemeToggleClick();
+  if (didEnterSpaceMode) {
+    persistState();
+    return;
+  }
+
+  toggleTheme();
   persistState();
 }
 
-function applyTheme(theme) {
-  document.documentElement.classList.toggle("theme-light", theme === "light");
-  document.body.classList.toggle("theme-light", theme === "light");
-  if (themeToggleIcon) {
-    themeToggleIcon.textContent = theme === "light" ? "\u263e" : "\u2600";
+function registerThemeToggleClick() {
+  const now = Date.now();
+  themeClickTimestamps = themeClickTimestamps.filter((timestamp) => now - timestamp <= secretClickWindowMs);
+  themeClickTimestamps.push(now);
+
+  if (themeClickTimestamps.length >= secretClickThreshold) {
+    themeClickTimestamps = [];
+    enterSpaceMode();
+    return true;
   }
-  if (themeToggleButton) {
-    themeToggleButton.setAttribute("aria-pressed", String(theme === "light"));
-  }
+
+  return false;
+}
+
+function toggleTheme() {
+  const nextTheme = themeState.theme === "light" ? "dark" : "light";
+  applyTheme(nextTheme, nextTheme, 0);
+}
+
+function enterSpaceMode() {
+  const previousTheme = themeState.theme === "light" ? "light" : defaultTheme;
+  applyTheme("space", previousTheme, Date.now() + spaceToggleLockDurationMs);
+}
+
+function exitSpaceMode() {
+  applyTheme(themeState.previousTheme, themeState.previousTheme, 0);
+}
+
+function applyTheme(theme, previousTheme = themeState.previousTheme, spaceLockUntil = 0) {
+  themeState = normalizeThemeState({ theme, previousTheme, spaceLockUntil });
+
+  document.documentElement.classList.toggle("theme-light", themeState.theme === "light");
+  document.documentElement.classList.toggle("theme-space", themeState.theme === "space");
+  document.body.classList.toggle("theme-light", themeState.theme === "light");
+  document.body.classList.toggle("theme-space", themeState.theme === "space");
+
+  syncThemeToggleButton();
+  scheduleSpaceToggleUnlock();
+
   if (typeof monaco !== "undefined") {
     monaco.editor.setTheme(getMonacoTheme());
   }
 }
 
 function getMonacoTheme() {
-  return document.body.classList.contains("theme-light") ? "vs" : "vs-dark";
+  return themeState.theme === "light" ? "vs" : "vs-dark";
 }
 
 function persistState() {
@@ -421,7 +552,9 @@ function persistState() {
     decodeOutput: decodeOutputEditor.getValue(),
     encodeInput: encodeInputEditor.getValue(),
     encodeOutput: encodeOutputEditor.getValue(),
-    theme: document.body.classList.contains("theme-light") ? "light" : "dark",
+    theme: themeState.theme,
+    previousTheme: themeState.previousTheme,
+    spaceLockUntil: themeState.spaceLockUntil,
   };
 
   try {
@@ -433,12 +566,10 @@ function persistState() {
 
 function restoreState() {
   try {
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) {
+    const state = readStoredState();
+    if (!state) {
       return;
     }
-
-    const state = JSON.parse(raw);
 
     if (typeof state.decodeInput === "string") {
       setEditorValue(decodeInputEditor, state.decodeInput, detectEditorLanguage(state.decodeInput));
@@ -457,7 +588,8 @@ function restoreState() {
       window.location.hash = state.activeHash;
     }
 
-    applyTheme(state.theme === "light" ? "light" : "dark");
+    const restoredThemeState = normalizeThemeState(state);
+    applyTheme(restoredThemeState.theme, restoredThemeState.previousTheme, restoredThemeState.spaceLockUntil);
   } catch (error) {
     // Ignore malformed stored data and continue with defaults.
   }
