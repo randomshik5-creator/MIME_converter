@@ -396,7 +396,10 @@ function applyTheme(theme) {
   document.documentElement.classList.toggle("theme-light", theme === "light");
   document.body.classList.toggle("theme-light", theme === "light");
   if (themeToggleIcon) {
-    themeToggleIcon.textContent = theme === "light" ? "☾" : "☀";
+    themeToggleIcon.textContent = theme === "light" ? "\u263e" : "\u2600";
+  }
+  if (themeToggleButton) {
+    themeToggleButton.setAttribute("aria-pressed", String(theme === "light"));
   }
   if (typeof monaco !== "undefined") {
     monaco.editor.setTheme(getMonacoTheme());
