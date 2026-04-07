@@ -320,7 +320,7 @@ html.theme-light body .sun {
 
 body.theme-light .moon,
 html.theme-light body .moon {
-  left: 82%;
+  left: 88%;
   top: 84%;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.8);
@@ -339,13 +339,12 @@ html.theme-space body .ground {
 
 body.theme-space .moon,
 html.theme-space body .moon {
-  left: auto;
-  right: 2%;
+  left: 88%;
   top: 13%;
   width: 98px;
   height: 98px;
   opacity: 0.96;
-  transform: scale(1);
+  transform: translate(-50%, -50%) scale(1);
   background: radial-gradient(circle at 34% 30%, #ffffff 0%, #eef3ff 56%, #bac6e7 100%);
   box-shadow: 0 0 34px rgba(182, 200, 255, 0.24);
   animation: space-moon-drift 7.4s ease-in-out infinite;
@@ -944,7 +943,7 @@ button:focus-visible {
 
   body.theme-space .moon,
   html.theme-space body .moon {
-    right: 3%;
+    left: 88%;
     top: 11%;
     width: 76px;
     height: 76px;
