@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Role Header Converter</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">GitHub Pages Tool</p>
+      <h1>Конвертер ролей для заголовков</h1>
+      <p class="lead">
+        Преобразует MIME/Base64 заголовок вида <code>=?UTF-8?B?...?=</code> в список ролей и обратно.
+      </p>
+    </section>
+
+    <section class="card controls">
+      <div class="button-row">
+        <button id="decodeButton" class="primary" type="button">Заголовок → роли</button>
+        <button id="encodeButton" type="button">Роли → заголовок</button>
+        <button id="swapButton" type="button">Поменять местами</button>
+        <button id="sampleButton" type="button">Подставить пример</button>
+        <button id="clearButton" type="button">Очистить</button>
+      </div>
+
+      <div class="status-row">
+        <p id="status" class="status">Готово к работе.</p>
+        <p id="counter" class="counter">Ролей: 0</p>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card panel">
+        <div class="panel-header">
+          <h2>Вход</h2>
+          <button id="pasteButton" type="button">Вставить</button>
+        </div>
+        <label class="hint" for="inputText">
+          Вставьте MIME-заголовок, Base64, JSON-массив или список ролей по одной строке.
+        </label>
+        <textarea id="inputText" spellcheck="false" placeholder="Вставьте значение сюда"></textarea>
+      </article>
+
+      <article class="card panel">
+        <div class="panel-header">
+          <h2>Результат</h2>
+          <button id="copyButton" type="button">Скопировать</button>
+        </div>
+        <label class="hint" for="outputText">
+          Результат конвертации. При декодировании выводится список ролей по строкам.
+        </label>
+        <textarea id="outputText" spellcheck="false" placeholder="Результат появится здесь"></textarea>
+      </article>
+    </section>
+
+    <section class="card tips">
+      <h2>Подсказки</h2>
+      <ul>
+        <li>При кодировании можно вставить JSON-массив или просто список ролей по одной строке.</li>
+        <li>При декодировании приложение понимает полный заголовок <code>=?UTF-8?B?...?=</code> и “чистый” Base64.</li>
+        <li>Все преобразования выполняются локально в браузере.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="./script.js"></script>
+</body>
+</html>
