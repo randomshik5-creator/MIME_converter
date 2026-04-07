@@ -36,7 +36,7 @@ html.theme-light body {
   --ground-hill-1: rgba(208, 242, 154, 0.34);
   --ground-hill-2: rgba(160, 216, 107, 0.26);
   --ground-texture: rgba(64, 114, 51, 0.17);
-  --horizon-color: rgba(255, 176, 95, 0.38);
+  --horizon-color: rgba(188, 223, 255, 0.34);
   --vignette: rgba(255, 255, 255, 0.08);
 }
 
@@ -113,7 +113,7 @@ html.theme-light body::before {
   transform: scale(1.06);
   background:
     radial-gradient(circle at 26% 24%, rgba(255, 246, 186, 0.38), transparent 26%),
-    linear-gradient(180deg, #69c8ff 0%, #95ddff 42%, #ffdca4 73%, #9cd179 100%);
+    linear-gradient(180deg, #69c8ff 0%, #95ddff 42%, #bfe7ff 73%, #9cd179 100%);
 }
 
 .sky-night {
@@ -245,21 +245,18 @@ html.theme-light body .moon {
   width: 108px;
   top: 20%;
   left: -18%;
-  animation: cloud-float-1 81s linear infinite;
 }
 
 .cloud-2 {
   width: 92px;
   top: 30%;
   left: -22%;
-  animation: cloud-float-2 99s linear infinite;
 }
 
 .cloud-3 {
   width: 124px;
   top: 14%;
   left: -26%;
-  animation: cloud-float-3 114s linear infinite;
 }
 
 body.theme-light .cloud,
