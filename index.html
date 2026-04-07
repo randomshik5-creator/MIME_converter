@@ -3,63 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Role Header Converter</title>
+  <title>MIME Converter</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main class="page">
     <section class="hero">
       <p class="eyebrow">GitHub Pages Tool</p>
-      <h1>Конвертер ролей для заголовков</h1>
+      <h1>Конвертер ролей</h1>
       <p class="lead">
-        Преобразует MIME/Base64 заголовок вида <code>=?UTF-8?B?...?=</code> в список ролей и обратно.
+        Два отдельных режима: декодирование MIME в текст ролей и сборка MIME из текста или JSON.
       </p>
     </section>
 
-    <section class="card controls">
-      <div class="button-row">
-        <button id="decodeButton" class="primary" type="button">Заголовок → роли</button>
-        <button id="encodeButton" type="button">Роли → заголовок</button>
-        <button id="swapButton" type="button">Поменять местами</button>
-        <button id="sampleButton" type="button">Подставить пример</button>
-        <button id="clearButton" type="button">Очистить</button>
-      </div>
+    <nav class="mode-switch" aria-label="Режимы">
+      <a id="decodeNav" class="mode-link" href="#decode">MIME → текст</a>
+      <a id="encodeNav" class="mode-link" href="#encode">Текст → MIME</a>
+    </nav>
 
-      <div class="status-row">
-        <p id="status" class="status">Готово к работе.</p>
-        <p id="counter" class="counter">Ролей: 0</p>
-      </div>
+    <section id="decodePage" class="page-panel">
+      <section class="card info-row">
+        <div class="status-row">
+          <p id="decodeStatus" class="status">Вставьте MIME-заголовок, и роли появятся справа.</p>
+          <p id="decodeCounter" class="counter">Ролей: 0</p>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card panel">
+          <div class="panel-header">
+            <h2>MIME</h2>
+            <div class="panel-actions">
+              <button id="decodePasteButton" type="button">Вставить</button>
+              <button id="decodeSampleButton" type="button">Пример</button>
+              <button id="decodeClearButton" type="button">Очистить</button>
+            </div>
+          </div>
+          <label class="hint" for="decodeInput">
+            Поддерживается полный заголовок <code>=?UTF-8?B?...?=</code> и чистый Base64.
+          </label>
+          <textarea id="decodeInput" spellcheck="false" placeholder="Вставьте MIME сюда"></textarea>
+        </article>
+
+        <article class="card panel">
+          <div class="panel-header">
+            <h2>Текст</h2>
+            <div class="panel-actions">
+              <button id="decodeCopyButton" type="button">Скопировать</button>
+            </div>
+          </div>
+          <label class="hint" for="decodeOutput">
+            Роли выводятся по одной строке.
+          </label>
+          <textarea id="decodeOutput" spellcheck="false" placeholder="Результат появится здесь"></textarea>
+        </article>
+      </section>
     </section>
 
-    <section class="grid">
-      <article class="card panel">
-        <div class="panel-header">
-          <h2>Вход</h2>
-          <button id="pasteButton" type="button">Вставить</button>
+    <section id="encodePage" class="page-panel">
+      <section class="card info-row">
+        <div class="status-row">
+          <p id="encodeStatus" class="status">Вставьте текст ролей или JSON-массив, и MIME появится справа.</p>
+          <p id="encodeCounter" class="counter">Ролей: 0</p>
         </div>
-        <label class="hint" for="inputText">
-          Вставьте MIME-заголовок, Base64, JSON-массив или список ролей по одной строке.
-        </label>
-        <textarea id="inputText" spellcheck="false" placeholder="Вставьте значение сюда"></textarea>
-      </article>
+      </section>
 
-      <article class="card panel">
-        <div class="panel-header">
-          <h2>Результат</h2>
-          <button id="copyButton" type="button">Скопировать</button>
-        </div>
-        <label class="hint" for="outputText">
-          Результат конвертации. При декодировании выводится список ролей по строкам.
-        </label>
-        <textarea id="outputText" spellcheck="false" placeholder="Результат появится здесь"></textarea>
-      </article>
+      <section class="grid">
+        <article class="card panel">
+          <div class="panel-header">
+            <h2>Текст</h2>
+            <div class="panel-actions">
+              <button id="encodePasteButton" type="button">Вставить</button>
+              <button id="beautifyButton" type="button">Beautify JSON</button>
+              <button id="encodeClearButton" type="button">Очистить</button>
+            </div>
+          </div>
+          <label class="hint" for="encodeInput">
+            Можно вставить JSON-массив или список ролей по одной строке.
+          </label>
+          <textarea id="encodeInput" spellcheck="false" placeholder="Вставьте роли сюда"></textarea>
+        </article>
+
+        <article class="card panel">
+          <div class="panel-header">
+            <h2>MIME</h2>
+            <div class="panel-actions">
+              <button id="encodeCopyButton" type="button">Скопировать</button>
+            </div>
+          </div>
+          <label class="hint" for="encodeOutput">
+            Готовый заголовок для вставки в запрос.
+          </label>
+          <textarea id="encodeOutput" spellcheck="false" placeholder="Результат появится здесь"></textarea>
+        </article>
+      </section>
     </section>
 
     <section class="card tips">
       <h2>Подсказки</h2>
       <ul>
-        <li>При кодировании можно вставить JSON-массив или просто список ролей по одной строке.</li>
-        <li>При декодировании приложение понимает полный заголовок <code>=?UTF-8?B?...?=</code> и “чистый” Base64.</li>
+        <li>На странице <code>MIME → текст</code> декодирование происходит автоматически.</li>
+        <li>На странице <code>Текст → MIME</code> MIME собирается автоматически при вводе.</li>
+        <li><code>Beautify JSON</code> форматирует только валидный JSON-массив.</li>
         <li>Все преобразования выполняются локально в браузере.</li>
       </ul>
     </section>

@@ -1,114 +1,138 @@
-const inputText = document.getElementById("inputText");
-const outputText = document.getElementById("outputText");
-const statusNode = document.getElementById("status");
-const counterNode = document.getElementById("counter");
+const decodeInput = document.getElementById("decodeInput");
+const decodeOutput = document.getElementById("decodeOutput");
+const decodeStatus = document.getElementById("decodeStatus");
+const decodeCounter = document.getElementById("decodeCounter");
+const encodeInput = document.getElementById("encodeInput");
+const encodeOutput = document.getElementById("encodeOutput");
+const encodeStatus = document.getElementById("encodeStatus");
+const encodeCounter = document.getElementById("encodeCounter");
+const decodePage = document.getElementById("decodePage");
+const encodePage = document.getElementById("encodePage");
+const decodeNav = document.getElementById("decodeNav");
+const encodeNav = document.getElementById("encodeNav");
 
 const sampleHeader = '=?UTF-8?B?WyJidHNfcG93ZXJhdHRvcm5leV9hY2Nlc3Nfd29ya193aXRoX3Bvd2VyX2F0dG9ybmV5IiwiYnRzX3Nob3BwaW5nX2NhcnRzX2FwcHJvdmluZyIsImJ0c19mdWxsX2FzcF9uYV9zZWxsX2N5Y2xlIiwidW1hX2F1dGhvcml6YXRpb24iLCJvZmZsaW5lX2FjY2VzcyJd?=';
-
 const mimePrefix = "=?UTF-8?B?";
 const mimeSuffix = "?=";
 
-document.getElementById("decodeButton").addEventListener("click", handleDecode);
-document.getElementById("encodeButton").addEventListener("click", handleEncode);
-document.getElementById("swapButton").addEventListener("click", handleSwap);
-document.getElementById("sampleButton").addEventListener("click", handleSample);
-document.getElementById("clearButton").addEventListener("click", handleClear);
-document.getElementById("copyButton").addEventListener("click", () => copyText(outputText.value));
-document.getElementById("pasteButton").addEventListener("click", pasteText);
-inputText.addEventListener("input", handleAutoConvert);
-inputText.addEventListener("paste", handleDeferredAutoConvert);
+document.getElementById("decodePasteButton").addEventListener("click", () => pasteInto(decodeInput, handleDecodeInput));
+document.getElementById("decodeSampleButton").addEventListener("click", loadSample);
+document.getElementById("decodeClearButton").addEventListener("click", clearDecode);
+document.getElementById("decodeCopyButton").addEventListener("click", () => copyText(decodeOutput.value, decodeStatus, decodeCounter, countRolesGuess(decodeOutput.value)));
 
-function handleDecode() {
+document.getElementById("encodePasteButton").addEventListener("click", () => pasteInto(encodeInput, handleEncodeInput));
+document.getElementById("beautifyButton").addEventListener("click", beautifyJsonInput);
+document.getElementById("encodeClearButton").addEventListener("click", clearEncode);
+document.getElementById("encodeCopyButton").addEventListener("click", () => copyText(encodeOutput.value, encodeStatus, encodeCounter, countRolesGuess(encodeInput.value)));
+
+decodeInput.addEventListener("input", handleDecodeInput);
+decodeInput.addEventListener("paste", () => setTimeout(handleDecodeInput, 0));
+encodeInput.addEventListener("input", handleEncodeInput);
+encodeInput.addEventListener("paste", () => setTimeout(handleEncodeInput, 0));
+window.addEventListener("hashchange", syncPageFromHash);
+
+syncPageFromHash();
+handleDecodeInput();
+handleEncodeInput();
+
+function handleDecodeInput() {
+  const normalized = decodeInput.value.trim();
+
+  if (!normalized) {
+    decodeOutput.value = "";
+    renderState(decodeStatus, decodeCounter, "Вставьте MIME-заголовок, и роли появятся справа.", 0);
+    return;
+  }
+
   try {
-    const parsed = decodeRoles(inputText.value);
-    outputText.value = parsed.roles.join("\n");
-    renderState(`Декодирование выполнено. Найдено ролей: ${parsed.roles.length}.`, parsed.roles.length);
+    const parsed = decodeRoles(normalized);
+    decodeOutput.value = parsed.roles.join("\n");
+    renderState(decodeStatus, decodeCounter, `Найдено ролей: ${parsed.roles.length}.`, parsed.roles.length);
   } catch (error) {
-    renderError(error.message);
+    decodeOutput.value = "";
+    renderError(decodeStatus, error.message);
   }
 }
 
-function handleEncode() {
+function handleEncodeInput() {
+  const normalized = encodeInput.value.trim();
+
+  if (!normalized) {
+    encodeOutput.value = "";
+    renderState(encodeStatus, encodeCounter, "Вставьте текст ролей или JSON-массив, и MIME появится справа.", 0);
+    return;
+  }
+
   try {
-    const roles = parseRoleInput(inputText.value);
-    const header = encodeRoles(roles);
-    outputText.value = header;
-    renderState(`Кодирование выполнено. Заголовок собран для ${roles.length} ролей.`, roles.length);
+    const roles = parseRoleInput(normalized);
+    encodeOutput.value = encodeRoles(roles);
+    renderState(encodeStatus, encodeCounter, `Заголовок собран для ${roles.length} ролей.`, roles.length);
   } catch (error) {
-    renderError(error.message);
+    encodeOutput.value = "";
+    renderError(encodeStatus, error.message);
   }
 }
 
-function handleSwap() {
-  const previousInput = inputText.value;
-  inputText.value = outputText.value;
-  outputText.value = previousInput;
-  handleAutoConvert();
+function loadSample() {
+  decodeInput.value = sampleHeader;
+  handleDecodeInput();
 }
 
-function handleSample() {
-  inputText.value = sampleHeader;
-  handleAutoConvert();
+function clearDecode() {
+  decodeInput.value = "";
+  decodeOutput.value = "";
+  renderState(decodeStatus, decodeCounter, "Поля очищены.", 0);
 }
 
-function handleClear() {
-  inputText.value = "";
-  outputText.value = "";
-  renderState("Поля очищены.", 0);
+function clearEncode() {
+  encodeInput.value = "";
+  encodeOutput.value = "";
+  renderState(encodeStatus, encodeCounter, "Поля очищены.", 0);
 }
 
-async function copyText(text) {
+async function copyText(text, statusNode, counterNode, count) {
   if (!text.trim()) {
-    renderError("Сначала получите результат, потом можно копировать.");
+    renderError(statusNode, "Сначала получите результат, потом можно копировать.");
     return;
   }
 
   try {
     await navigator.clipboard.writeText(text);
-    renderState("Результат скопирован в буфер обмена.", countRolesGuess(outputText.value));
+    renderState(statusNode, counterNode, "Результат скопирован в буфер обмена.", count);
   } catch (error) {
-    renderError("Не удалось скопировать текст. Возможно, браузер запретил доступ к буферу.");
+    renderError(statusNode, "Не удалось скопировать текст. Возможно, браузер запретил доступ к буферу.");
   }
 }
 
-async function pasteText() {
+async function pasteInto(target, callback) {
   try {
     const text = await navigator.clipboard.readText();
-    inputText.value = text;
-    handleAutoConvert();
+    target.value = text;
+    callback();
   } catch (error) {
-    renderError("Не удалось вставить текст из буфера обмена. Вставьте вручную.");
+    const statusNode = target === decodeInput ? decodeStatus : encodeStatus;
+    renderError(statusNode, "Не удалось вставить текст из буфера обмена. Вставьте вручную.");
   }
 }
 
-function handleAutoConvert() {
-  const normalized = inputText.value.trim();
+function beautifyJsonInput() {
+  const normalized = encodeInput.value.trim();
 
   if (!normalized) {
-    outputText.value = "";
-    renderState("Готово к работе.", 0);
+    renderError(encodeStatus, "Сначала вставьте JSON-массив.");
     return;
   }
 
   try {
-    if (looksLikeEncodedHeader(normalized)) {
-      const parsed = decodeRoles(normalized);
-      outputText.value = parsed.roles.join("\n");
-      renderState(`Распознан заголовок. Найдено ролей: ${parsed.roles.length}.`, parsed.roles.length);
-      return;
+    const parsed = JSON.parse(normalized);
+    if (!Array.isArray(parsed)) {
+      throw new Error("not-array");
     }
-
-    const roles = parseRoleInput(normalized);
-    outputText.value = encodeRoles(roles);
-    renderState(`Распознан список ролей. Заголовок собран для ${roles.length} ролей.`, roles.length);
+    encodeInput.value = JSON.stringify(parsed, null, 2);
+    handleEncodeInput();
   } catch (error) {
-    outputText.value = "";
-    renderError(error.message);
+    renderError(encodeStatus, "Beautify работает только для валидного JSON-массива.");
   }
-}
-
-function handleDeferredAutoConvert() {
-  setTimeout(handleAutoConvert, 0);
 }
 
 function decodeRoles(rawInput) {
@@ -177,23 +201,7 @@ function extractBase64(value) {
     return mimeMatch[1];
   }
 
-  if (value.startsWith("[") || value.includes("\n")) {
-    throw new Error("Похоже, это уже JSON или список ролей. Для этого используйте кнопку «Роли → заголовок».");
-  }
-
   return value;
-}
-
-function looksLikeEncodedHeader(value) {
-  if (/^=\?UTF-8\?B\?.+\?=$/i.test(value)) {
-    return true;
-  }
-
-  if (value.startsWith("[") || value.includes("\n")) {
-    return false;
-  }
-
-  return /^[A-Za-z0-9+/=]+$/.test(value);
 }
 
 function uniqueRoles(roles) {
@@ -262,13 +270,21 @@ function countRolesGuess(text) {
   return normalized.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).length;
 }
 
-function renderState(message, count) {
+function syncPageFromHash() {
+  const isEncode = window.location.hash === "#encode";
+  decodePage.classList.toggle("active", !isEncode);
+  encodePage.classList.toggle("active", isEncode);
+  decodeNav.classList.toggle("active", !isEncode);
+  encodeNav.classList.toggle("active", isEncode);
+}
+
+function renderState(statusNode, counterNode, message, count) {
   statusNode.textContent = message;
   statusNode.classList.remove("error");
   counterNode.textContent = `Ролей: ${count}`;
 }
 
-function renderError(message) {
+function renderError(statusNode, message) {
   statusNode.textContent = message;
   statusNode.classList.add("error");
 }
