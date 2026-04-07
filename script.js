@@ -98,6 +98,11 @@ function initActions() {
   document.getElementById("encodeClearButton").addEventListener("click", clearEncodeFields);
   themeToggleButton.addEventListener("click", toggleTheme);
 
+  bindClipboardButtons("decodeInputPasteButton", "decodeInputCopyButton", decodeInputEditor, handleDecodeInput);
+  bindClipboardButtons("decodeOutputPasteButton", "decodeOutputCopyButton", decodeOutputEditor, updateJsonButtons);
+  bindClipboardButtons("encodeInputPasteButton", "encodeInputCopyButton", encodeInputEditor, handleEncodeInput);
+  bindClipboardButtons("encodeOutputPasteButton", "encodeOutputCopyButton", encodeOutputEditor, updateJsonButtons);
+
   bindJsonButton("decodeInputFormatButton", decodeInputEditor, "format");
   bindJsonButton("decodeInputMinifyButton", decodeInputEditor, "minify");
   bindJsonButton("decodeOutputFormatButton", decodeOutputEditor, "format");
@@ -108,6 +113,32 @@ function initActions() {
   bindJsonButton("encodeOutputMinifyButton", encodeOutputEditor, "minify");
 
   updateJsonButtons();
+}
+
+function bindClipboardButtons(pasteButtonId, copyButtonId, editor, afterPaste) {
+  document.getElementById(pasteButtonId).addEventListener("click", async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setEditorValue(editor, text, detectEditorLanguage(text));
+      if (typeof afterPaste === "function") {
+        afterPaste();
+      }
+      updateJsonButtons();
+      persistState();
+    } catch (error) {
+      const statusNode = editor === decodeInputEditor || editor === decodeOutputEditor ? decodeStatus : encodeStatus;
+      renderError(statusNode, "Не удалось вставить из буфера обмена.");
+    }
+  });
+
+  document.getElementById(copyButtonId).addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(editor.getValue());
+    } catch (error) {
+      const statusNode = editor === decodeInputEditor || editor === decodeOutputEditor ? decodeStatus : encodeStatus;
+      renderError(statusNode, "Не удалось скопировать в буфер обмена.");
+    }
+  });
 }
 
 function bindJsonButton(buttonId, editor, mode) {
