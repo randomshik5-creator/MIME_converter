@@ -12,7 +12,7 @@ let decodeInputEditor;
 let decodeOutputEditor;
 let encodeInputEditor;
 let encodeOutputEditor;
-const monacoBaseUrl = new URL("./vendor/monaco/vs/", window.location.href).toString();
+const monacoRootUrl = new URL("./vendor/monaco/", window.location.href).toString();
 
 require.config({
   paths: {
@@ -23,8 +23,8 @@ require.config({
 window.MonacoEnvironment = {
   getWorkerUrl() {
     return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-      self.MonacoEnvironment = { baseUrl: ${JSON.stringify(monacoBaseUrl)} };
-      importScripts(${JSON.stringify(`${monacoBaseUrl}base/worker/workerMain.js`)});
+      self.MonacoEnvironment = { baseUrl: ${JSON.stringify(monacoRootUrl)} };
+      importScripts(${JSON.stringify(`${monacoRootUrl}vs/base/worker/workerMain.js`)});
     `)}`;
   },
 };
