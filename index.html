@@ -12,12 +12,14 @@
         var theme = "dark";
         if (raw) {
           var state = JSON.parse(raw);
-          if (state && state.theme === "light") {
-            theme = "light";
+          if (state && (state.theme === "light" || state.theme === "space")) {
+            theme = state.theme;
           }
         }
         if (theme === "light") {
           document.documentElement.classList.add("theme-light");
+        } else if (theme === "space") {
+          document.documentElement.classList.add("theme-space");
         }
       } catch (error) {
         // Ignore and fall back to default dark theme.
@@ -30,7 +32,9 @@
   <div class="theme-scene" aria-hidden="true">
     <div class="sky-layer sky-day"></div>
     <div class="sky-layer sky-night"></div>
-    <div class="stars"></div>
+    <div class="stars stars-base"></div>
+    <div class="stars stars-mid"></div>
+    <div class="stars stars-near"></div>
     <div class="sun"></div>
     <div class="moon"></div>
     <div class="cloud cloud-1"></div>
@@ -38,6 +42,37 @@
     <div class="cloud cloud-3"></div>
     <div class="horizon-glow"></div>
     <div class="ground"></div>
+    <div class="space-rocket">
+      <div class="space-rocket__trail"></div>
+      <div class="space-rocket__flame"></div>
+      <svg class="space-rocket__svg" viewBox="0 0 160 280" role="presentation" focusable="false">
+        <defs>
+          <linearGradient id="spaceRocketBody" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#f8fbff"></stop>
+            <stop offset="48%" stop-color="#cad5ea"></stop>
+            <stop offset="100%" stop-color="#8b98b7"></stop>
+          </linearGradient>
+          <linearGradient id="spaceRocketAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#88b1ff"></stop>
+            <stop offset="100%" stop-color="#7f72ff"></stop>
+          </linearGradient>
+          <linearGradient id="spaceRocketWindow" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#e6fbff"></stop>
+            <stop offset="100%" stop-color="#8cc2ff"></stop>
+          </linearGradient>
+        </defs>
+        <path d="M80 16c28 29 44 74 44 132v60H36v-60C36 90 52 45 80 16Z" fill="url(#spaceRocketBody)"></path>
+        <path d="M80 16c11 12 20 27 27 46H53c7-19 16-34 27-46Z" fill="url(#spaceRocketAccent)"></path>
+        <path d="M36 148h88v44H36z" fill="rgba(60, 76, 114, 0.16)"></path>
+        <circle cx="80" cy="98" r="21" fill="url(#spaceRocketWindow)"></circle>
+        <circle cx="80" cy="98" r="11" fill="rgba(255,255,255,0.76)"></circle>
+        <path d="M36 154 8 198l30 10 18-34z" fill="#5f72b8"></path>
+        <path d="m124 154 28 44-30 10-18-34z" fill="#5f72b8"></path>
+        <path d="M54 208v34l-24 26 10-42z" fill="#4d5f8d"></path>
+        <path d="M106 208v34l24 26-10-42z" fill="#4d5f8d"></path>
+        <path d="M62 208h36v36H62z" fill="#1f2536"></path>
+      </svg>
+    </div>
   </div>
   <main class="page">
     <div class="topbar">
@@ -47,6 +82,7 @@
       </nav>
       <button id="themeToggleButton" class="theme-toggle" type="button" aria-label="Переключить тему" title="Переключить тему">
         <span id="themeToggleIcon" aria-hidden="true">☀</span>
+        <span id="themeToggleLabel" class="theme-toggle-label" aria-hidden="true"></span>
       </button>
     </div>
 
