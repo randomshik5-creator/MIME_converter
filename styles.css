@@ -32,6 +32,10 @@ body {
   min-height: 100vh;
   font-family: Georgia, "Times New Roman", serif;
   color: var(--text);
+  background: var(--bg);
+}
+
+body.theme-light {
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 34%),
     radial-gradient(circle at right, rgba(170, 63, 34, 0.12), transparent 30%),
