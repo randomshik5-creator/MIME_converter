@@ -8,14 +8,6 @@
 </head>
 <body>
   <main class="page">
-    <section class="hero">
-      <p class="eyebrow">GitHub Pages Tool</p>
-      <h1>Конвертер ролей</h1>
-      <p class="lead">
-        Два отдельных режима: декодирование MIME в текст ролей и сборка MIME из текста или JSON.
-      </p>
-    </section>
-
     <nav class="mode-switch" aria-label="Режимы">
       <a id="decodeNav" class="mode-link" href="#decode">MIME → текст</a>
       <a id="encodeNav" class="mode-link" href="#encode">Текст → MIME</a>
@@ -24,8 +16,8 @@
     <section id="decodePage" class="page-panel">
       <section class="card info-row">
         <div class="status-row">
-          <p id="decodeStatus" class="status">Вставьте MIME-заголовок, и роли появятся справа.</p>
-          <p id="decodeCounter" class="counter">Ролей: 0</p>
+          <p id="decodeStatus" class="status">Вставьте MIME слева. Справа появится декодированный текст.</p>
+          <p id="decodeCounter" class="counter">Строк: 0</p>
         </div>
         <div class="toolbar">
           <button id="decodeSwapButton" type="button">Поменять местами</button>
@@ -38,20 +30,14 @@
           <div class="panel-header">
             <h2>MIME</h2>
           </div>
-          <label class="hint" for="decodeInput">
-            Поддерживается полный заголовок <code>=?UTF-8?B?...?=</code> и чистый Base64.
-          </label>
-          <textarea id="decodeInput" spellcheck="false" placeholder="Вставьте MIME сюда"></textarea>
+          <div id="decodeInputEditor" class="editor" aria-label="MIME input"></div>
         </article>
 
         <article class="card panel">
           <div class="panel-header">
             <h2>Текст</h2>
           </div>
-          <label class="hint" for="decodeOutput">
-            Если внутри MIME находится JSON, он будет отформатирован для чтения.
-          </label>
-          <textarea id="decodeOutput" spellcheck="false" placeholder="Результат появится здесь"></textarea>
+          <div id="decodeOutputEditor" class="editor" aria-label="Decoded output"></div>
         </article>
       </section>
     </section>
@@ -59,8 +45,8 @@
     <section id="encodePage" class="page-panel">
       <section class="card info-row">
         <div class="status-row">
-          <p id="encodeStatus" class="status">Вставьте текст ролей или JSON-массив, и MIME появится справа.</p>
-          <p id="encodeCounter" class="counter">Ролей: 0</p>
+          <p id="encodeStatus" class="status">Вставьте текст слева. Справа появится MIME.</p>
+          <p id="encodeCounter" class="counter">Строк: 0</p>
         </div>
         <div class="toolbar">
           <button id="encodeSwapButton" type="button">Поменять местами</button>
@@ -73,35 +59,20 @@
           <div class="panel-header">
             <h2>Текст</h2>
           </div>
-          <label class="hint" for="encodeInput">
-            Вставьте обычный текст или JSON. Содержимое не преобразуется, только кодируется в MIME.
-          </label>
-          <textarea id="encodeInput" spellcheck="false" placeholder="Вставьте роли сюда"></textarea>
+          <div id="encodeInputEditor" class="editor" aria-label="Text input"></div>
         </article>
 
         <article class="card panel">
           <div class="panel-header">
             <h2>MIME</h2>
           </div>
-          <label class="hint" for="encodeOutput">
-            Готовый заголовок для вставки в запрос.
-          </label>
-          <textarea id="encodeOutput" spellcheck="false" placeholder="Результат появится здесь"></textarea>
+          <div id="encodeOutputEditor" class="editor" aria-label="Encoded output"></div>
         </article>
       </section>
     </section>
-
-    <section class="card tips">
-      <h2>Подсказки</h2>
-      <ul>
-        <li>На странице <code>MIME → текст</code> декодирование происходит автоматически.</li>
-        <li>На странице <code>Текст → MIME</code> MIME собирается автоматически при вводе.</li>
-        <li>Если декодированный текст является JSON, он форматируется автоматически.</li>
-        <li>Все преобразования выполняются локально в браузере.</li>
-      </ul>
-    </section>
   </main>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>
   <script src="./script.js"></script>
 </body>
 </html>

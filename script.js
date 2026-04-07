@@ -1,9 +1,8 @@
-const decodeInput = document.getElementById("decodeInput");
-const decodeOutput = document.getElementById("decodeOutput");
+const mimePrefix = "=?UTF-8?B?";
+const mimeSuffix = "?=";
+
 const decodeStatus = document.getElementById("decodeStatus");
 const decodeCounter = document.getElementById("decodeCounter");
-const encodeInput = document.getElementById("encodeInput");
-const encodeOutput = document.getElementById("encodeOutput");
 const encodeStatus = document.getElementById("encodeStatus");
 const encodeCounter = document.getElementById("encodeCounter");
 const decodePage = document.getElementById("decodePage");
@@ -11,136 +10,236 @@ const encodePage = document.getElementById("encodePage");
 const decodeNav = document.getElementById("decodeNav");
 const encodeNav = document.getElementById("encodeNav");
 
-const mimePrefix = "=?UTF-8?B?";
-const mimeSuffix = "?=";
+let decodeInputEditor;
+let decodeOutputEditor;
+let encodeInputEditor;
+let encodeOutputEditor;
 
-document.getElementById("decodeSwapButton").addEventListener("click", swapDecodeFields);
-document.getElementById("decodeClearButton").addEventListener("click", clearDecodeFields);
-document.getElementById("encodeSwapButton").addEventListener("click", swapEncodeFields);
-document.getElementById("encodeClearButton").addEventListener("click", clearEncodeFields);
+require.config({
+  paths: {
+    vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs",
+  },
+});
 
-decodeInput.addEventListener("input", handleDecodeInput);
-decodeInput.addEventListener("paste", () => setTimeout(handleDecodeInput, 0));
-encodeInput.addEventListener("input", handleEncodeInput);
-encodeInput.addEventListener("paste", () => setTimeout(handleEncodeInput, 0));
-window.addEventListener("hashchange", syncPageFromHash);
+window.MonacoEnvironment = {
+  getWorkerUrl() {
+    return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+      self.MonacoEnvironment = { baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/' };
+      importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/base/worker/workerMain.min.js');
+    `)}`;
+  },
+};
 
-syncPageFromHash();
-handleDecodeInput();
-handleEncodeInput();
+require(["vs/editor/editor.main"], () => {
+  initEditors();
+  initActions();
+  syncPageFromHash();
+  handleDecodeInput();
+  handleEncodeInput();
+  window.addEventListener("resize", layoutEditors);
+  window.addEventListener("hashchange", syncPageFromHash);
+});
+
+function initEditors() {
+  decodeInputEditor = createEditor("decodeInputEditor", "plaintext", true, "Вставьте MIME сюда");
+  decodeOutputEditor = createEditor("decodeOutputEditor", "plaintext", true, "Результат появится здесь");
+  encodeInputEditor = createEditor("encodeInputEditor", "plaintext", true, "Вставьте текст сюда");
+  encodeOutputEditor = createEditor("encodeOutputEditor", "plaintext", true, "Результат появится здесь");
+
+  decodeInputEditor.onDidChangeModelContent(handleDecodeInput);
+  encodeInputEditor.onDidChangeModelContent(handleEncodeInput);
+}
+
+function createEditor(containerId, language, editable, placeholder) {
+  return monaco.editor.create(document.getElementById(containerId), {
+    value: "",
+    language,
+    theme: "vs",
+    automaticLayout: true,
+    minimap: { enabled: false },
+    lineNumbers: "on",
+    roundedSelection: false,
+    scrollBeyondLastLine: false,
+    wordWrap: "on",
+    fontSize: 14,
+    fontFamily: "Consolas, 'Courier New', monospace",
+    tabSize: 2,
+    readOnly: !editable,
+    renderLineHighlight: "line",
+    padding: { top: 14, bottom: 14 },
+    placeholder,
+  });
+}
+
+function initActions() {
+  document.getElementById("decodeSwapButton").addEventListener("click", moveDecodeOutputToEncodeInput);
+  document.getElementById("decodeClearButton").addEventListener("click", clearDecodeFields);
+  document.getElementById("encodeSwapButton").addEventListener("click", moveEncodeOutputToDecodeInput);
+  document.getElementById("encodeClearButton").addEventListener("click", clearEncodeFields);
+}
 
 function handleDecodeInput() {
-  const normalized = decodeInput.value.trim();
+  const normalized = decodeInputEditor.getValue().trim();
 
   if (!normalized) {
-    decodeOutput.value = "";
-    renderState(decodeStatus, decodeCounter, "Вставьте MIME-заголовок, и роли появятся справа.", 0);
+    setEditorValue(decodeOutputEditor, "", "plaintext");
+    renderState(decodeStatus, decodeCounter, "Вставьте MIME слева. Справа появится декодированный текст.", 0);
     return;
   }
 
   try {
-    const parsed = decodeRoles(normalized);
-    decodeOutput.value = formatDecodedText(parsed.text);
-    renderState(decodeStatus, decodeCounter, "Декодирование выполнено.", parsed.count);
+    const result = decodeMimeToText(normalized);
+    setEditorValue(decodeOutputEditor, result.text, result.language);
+    renderState(decodeStatus, decodeCounter, "Декодирование выполнено.", result.count);
   } catch (error) {
-    decodeOutput.value = "";
+    setEditorValue(decodeOutputEditor, "", "plaintext");
     renderError(decodeStatus, error.message);
   }
 }
 
 function handleEncodeInput() {
-  const normalized = encodeInput.value.trim();
+  const normalized = encodeInputEditor.getValue();
 
-  if (!normalized) {
-    encodeOutput.value = "";
-    renderState(encodeStatus, encodeCounter, "Вставьте текст ролей или JSON-массив, и MIME появится справа.", 0);
+  if (!normalized.trim()) {
+    setEditorValue(encodeOutputEditor, "", "plaintext");
+    renderState(encodeStatus, encodeCounter, "Вставьте текст слева. Справа появится MIME.", 0);
     return;
   }
 
   try {
-    encodeOutput.value = encodeText(normalized);
-    renderState(encodeStatus, encodeCounter, "Кодирование выполнено.", countRolesGuess(normalized));
+    const inputText = beautifyJsonIfPossible(normalized);
+    if (inputText !== normalized) {
+      preserveSelectionWhileUpdating(encodeInputEditor, inputText, "json");
+    } else {
+      setLanguage(encodeInputEditor, detectEditorLanguage(normalized));
+    }
+
+    setEditorValue(encodeOutputEditor, encodeText(inputText), "plaintext");
+    renderState(encodeStatus, encodeCounter, "Кодирование выполнено.", countLines(inputText));
   } catch (error) {
-    encodeOutput.value = "";
+    setEditorValue(encodeOutputEditor, "", "plaintext");
     renderError(encodeStatus, error.message);
   }
 }
 
+function moveDecodeOutputToEncodeInput() {
+  const output = decodeOutputEditor.getValue();
+  window.location.hash = "#encode";
+  setEditorValue(encodeInputEditor, beautifyJsonIfPossible(output), detectEditorLanguage(output));
+  handleEncodeInput();
+  encodeInputEditor.focus();
+}
+
+function moveEncodeOutputToDecodeInput() {
+  const output = encodeOutputEditor.getValue();
+  window.location.hash = "#decode";
+  setEditorValue(decodeInputEditor, output, "plaintext");
+  handleDecodeInput();
+  decodeInputEditor.focus();
+}
+
 function clearDecodeFields() {
-  decodeInput.value = "";
-  decodeOutput.value = "";
+  setEditorValue(decodeInputEditor, "", "plaintext");
+  setEditorValue(decodeOutputEditor, "", "plaintext");
   renderState(decodeStatus, decodeCounter, "Поля очищены.", 0);
 }
 
 function clearEncodeFields() {
-  encodeInput.value = "";
-  encodeOutput.value = "";
+  setEditorValue(encodeInputEditor, "", "plaintext");
+  setEditorValue(encodeOutputEditor, "", "plaintext");
   renderState(encodeStatus, encodeCounter, "Поля очищены.", 0);
 }
 
-function swapDecodeFields() {
-  decodeInput.value = decodeOutput.value;
-  handleDecodeInput();
-}
-
-function swapEncodeFields() {
-  encodeInput.value = encodeOutput.value;
-  handleEncodeInput();
-}
-
-function decodeRoles(rawInput) {
-  const normalized = rawInput.trim();
-
-  if (!normalized) {
-    throw new Error("Поле ввода пустое.");
-  }
-
-  const base64Body = extractBase64(normalized);
+function decodeMimeToText(rawInput) {
+  const base64Body = extractBase64(rawInput.trim());
   const decodedText = decodeBase64Unicode(base64Body);
-  let parsedJson = null;
-
-  try {
-    parsedJson = JSON.parse(decodedText);
-  } catch (error) {
-    return {
-      text: decodedText,
-      count: countRolesGuess(decodedText),
-    };
-  }
+  const beautified = beautifyJsonIfPossible(decodedText);
 
   return {
-    text: JSON.stringify(parsedJson, null, 2),
-    count: Array.isArray(parsedJson) ? parsedJson.length : countRolesGuess(decodedText),
+    text: beautified,
+    language: detectEditorLanguage(beautified),
+    count: countLines(beautified),
   };
 }
 
 function encodeText(text) {
-  const base64 = encodeBase64Unicode(text);
-  return `${mimePrefix}${base64}${mimeSuffix}`;
+  return `${mimePrefix}${encodeBase64Unicode(text)}${mimeSuffix}`;
 }
 
 function extractBase64(value) {
-  const mimeMatch = value.match(/^=\?UTF-8\?B\?(.+)\?=$/i);
+  const mimeMatch = value.match(/^=\?UTF-8\?B\?([\s\S]+)\?=$/i);
   if (mimeMatch) {
-    return mimeMatch[1];
+    return mimeMatch[1].trim();
+  }
+  return value.trim();
+}
+
+function beautifyJsonIfPossible(text) {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return text;
   }
 
-  return value;
+  try {
+    return JSON.stringify(JSON.parse(trimmed), null, 2);
+  } catch (error) {
+    return text;
+  }
+}
+
+function detectEditorLanguage(text) {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return "plaintext";
+  }
+
+  try {
+    JSON.parse(trimmed);
+    return "json";
+  } catch (error) {
+    return "plaintext";
+  }
+}
+
+function setEditorValue(editor, value, language) {
+  const model = editor.getModel();
+  if (model.getValue() !== value) {
+    editor.setValue(value);
+  }
+  setLanguage(editor, language);
+}
+
+function preserveSelectionWhileUpdating(editor, value, language) {
+  const selection = editor.getSelection();
+  setEditorValue(editor, value, language);
+  if (selection) {
+    editor.setSelection(selection);
+  }
+}
+
+function setLanguage(editor, language) {
+  monaco.editor.setModelLanguage(editor.getModel(), language);
 }
 
 function encodeBase64Unicode(value) {
   const bytes = new TextEncoder().encode(value);
-  return bytesToBase64(bytes);
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
 }
 
 function decodeBase64Unicode(value) {
-  let bytes;
+  let binary;
 
   try {
-    bytes = base64ToBytes(value);
+    binary = atob(value);
   } catch (error) {
     throw new Error("Строка не похожа на корректный Base64.");
   }
+
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
 
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
@@ -149,43 +248,12 @@ function decodeBase64Unicode(value) {
   }
 }
 
-function bytesToBase64(bytes) {
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary);
-}
-
-function base64ToBytes(value) {
-  const binary = atob(value);
-  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
-}
-
-function countRolesGuess(text) {
-  const normalized = text.trim();
-  if (!normalized) {
+function countLines(text) {
+  const trimmed = text.trim();
+  if (!trimmed) {
     return 0;
   }
-
-  if (normalized.startsWith("[") && normalized.endsWith("]")) {
-    try {
-      const parsed = JSON.parse(normalized);
-      return Array.isArray(parsed) ? parsed.length : 0;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  return normalized.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).length;
-}
-
-function formatDecodedText(text) {
-  try {
-    return JSON.stringify(JSON.parse(text), null, 2);
-  } catch (error) {
-    return text;
-  }
+  return trimmed.split(/\r?\n/).length;
 }
 
 function syncPageFromHash() {
@@ -194,12 +262,22 @@ function syncPageFromHash() {
   encodePage.classList.toggle("active", isEncode);
   decodeNav.classList.toggle("active", !isEncode);
   encodeNav.classList.toggle("active", isEncode);
+  layoutEditors();
+}
+
+function layoutEditors() {
+  if (decodeInputEditor) {
+    decodeInputEditor.layout();
+    decodeOutputEditor.layout();
+    encodeInputEditor.layout();
+    encodeOutputEditor.layout();
+  }
 }
 
 function renderState(statusNode, counterNode, message, count) {
   statusNode.textContent = message;
   statusNode.classList.remove("error");
-  counterNode.textContent = `Ролей: ${count}`;
+  counterNode.textContent = `Строк: ${count}`;
 }
 
 function renderError(statusNode, message) {
