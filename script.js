@@ -45,8 +45,16 @@ function initEditors() {
   encodeInputEditor = createEditor("encodeInputEditor", "plaintext", true, "Вставьте текст сюда");
   encodeOutputEditor = createEditor("encodeOutputEditor", "plaintext", true, "Результат появится здесь");
 
-  decodeInputEditor.onDidChangeModelContent(handleDecodeInput);
-  encodeInputEditor.onDidChangeModelContent(handleEncodeInput);
+  decodeInputEditor.onDidChangeModelContent(() => {
+    handleDecodeInput();
+    updateJsonButtons();
+  });
+  decodeOutputEditor.onDidChangeModelContent(updateJsonButtons);
+  encodeInputEditor.onDidChangeModelContent(() => {
+    handleEncodeInput();
+    updateJsonButtons();
+  });
+  encodeOutputEditor.onDidChangeModelContent(updateJsonButtons);
 }
 
 function createEditor(containerId, language, editable, placeholder) {
@@ -75,6 +83,39 @@ function initActions() {
   document.getElementById("decodeClearButton").addEventListener("click", clearDecodeFields);
   document.getElementById("encodeSwapButton").addEventListener("click", moveEncodeOutputToDecodeInput);
   document.getElementById("encodeClearButton").addEventListener("click", clearEncodeFields);
+
+  bindJsonButton("decodeInputFormatButton", decodeInputEditor, "format");
+  bindJsonButton("decodeInputMinifyButton", decodeInputEditor, "minify");
+  bindJsonButton("decodeOutputFormatButton", decodeOutputEditor, "format");
+  bindJsonButton("decodeOutputMinifyButton", decodeOutputEditor, "minify");
+  bindJsonButton("encodeInputFormatButton", encodeInputEditor, "format");
+  bindJsonButton("encodeInputMinifyButton", encodeInputEditor, "minify");
+  bindJsonButton("encodeOutputFormatButton", encodeOutputEditor, "format");
+  bindJsonButton("encodeOutputMinifyButton", encodeOutputEditor, "minify");
+
+  updateJsonButtons();
+}
+
+function bindJsonButton(buttonId, editor, mode) {
+  document.getElementById(buttonId).addEventListener("click", () => {
+    const text = editor.getValue();
+    if (!isJsonText(text)) {
+      return;
+    }
+
+    const nextText = mode === "format" ? formatJson(text) : minifyJson(text);
+    const nextLanguage = "json";
+
+    setEditorValue(editor, nextText, nextLanguage);
+
+    if (editor === encodeInputEditor) {
+      handleEncodeInput();
+    } else if (editor === decodeInputEditor) {
+      handleDecodeInput();
+    }
+
+    updateJsonButtons();
+  });
 }
 
 function handleDecodeInput() {
@@ -83,6 +124,7 @@ function handleDecodeInput() {
   if (!normalized) {
     setEditorValue(decodeOutputEditor, "", "plaintext");
     renderState(decodeStatus, "Вставьте MIME слева. Справа появится декодированный текст.");
+    updateJsonButtons();
     return;
   }
 
@@ -94,37 +136,36 @@ function handleDecodeInput() {
     setEditorValue(decodeOutputEditor, "", "plaintext");
     renderError(decodeStatus, error.message);
   }
+
+  updateJsonButtons();
 }
 
 function handleEncodeInput() {
-  const normalized = encodeInputEditor.getValue();
+  const rawText = encodeInputEditor.getValue();
 
-  if (!normalized.trim()) {
+  if (!rawText.trim()) {
     setEditorValue(encodeOutputEditor, "", "plaintext");
     renderState(encodeStatus, "Вставьте текст слева. Справа появится MIME.");
+    updateJsonButtons();
     return;
   }
 
   try {
-    const inputText = beautifyJsonIfPossible(normalized);
-    if (inputText !== normalized) {
-      preserveSelectionWhileUpdating(encodeInputEditor, inputText, "json");
-    } else {
-      setLanguage(encodeInputEditor, detectEditorLanguage(normalized));
-    }
-
-    setEditorValue(encodeOutputEditor, encodeText(inputText), "plaintext");
+    setLanguage(encodeInputEditor, detectEditorLanguage(rawText));
+    setEditorValue(encodeOutputEditor, encodeText(rawText), "plaintext");
     renderState(encodeStatus, "Кодирование выполнено.");
   } catch (error) {
     setEditorValue(encodeOutputEditor, "", "plaintext");
     renderError(encodeStatus, error.message);
   }
+
+  updateJsonButtons();
 }
 
 function moveDecodeOutputToEncodeInput() {
   const output = decodeOutputEditor.getValue();
   window.location.hash = "#encode";
-  setEditorValue(encodeInputEditor, beautifyJsonIfPossible(output), detectEditorLanguage(output));
+  setEditorValue(encodeInputEditor, output, detectEditorLanguage(output));
   handleEncodeInput();
   encodeInputEditor.focus();
 }
@@ -141,23 +182,23 @@ function clearDecodeFields() {
   setEditorValue(decodeInputEditor, "", "plaintext");
   setEditorValue(decodeOutputEditor, "", "plaintext");
   renderState(decodeStatus, "Поля очищены.");
+  updateJsonButtons();
 }
 
 function clearEncodeFields() {
   setEditorValue(encodeInputEditor, "", "plaintext");
   setEditorValue(encodeOutputEditor, "", "plaintext");
   renderState(encodeStatus, "Поля очищены.");
+  updateJsonButtons();
 }
 
 function decodeMimeToText(rawInput) {
   const base64Body = extractBase64(rawInput.trim());
   const decodedText = decodeBase64Unicode(base64Body);
-  const beautified = beautifyJsonIfPossible(decodedText);
 
   return {
-    text: beautified,
-    language: detectEditorLanguage(beautified),
-    count: countLines(beautified),
+    text: decodedText,
+    language: detectEditorLanguage(decodedText),
   };
 }
 
@@ -173,31 +214,30 @@ function extractBase64(value) {
   return value.trim();
 }
 
-function beautifyJsonIfPossible(text) {
+function isJsonText(text) {
   const trimmed = text.trim();
   if (!trimmed) {
-    return text;
-  }
-
-  try {
-    return JSON.stringify(JSON.parse(trimmed), null, 2);
-  } catch (error) {
-    return text;
-  }
-}
-
-function detectEditorLanguage(text) {
-  const trimmed = text.trim();
-  if (!trimmed) {
-    return "plaintext";
+    return false;
   }
 
   try {
     JSON.parse(trimmed);
-    return "json";
+    return true;
   } catch (error) {
-    return "plaintext";
+    return false;
   }
+}
+
+function formatJson(text) {
+  return JSON.stringify(JSON.parse(text), null, 2);
+}
+
+function minifyJson(text) {
+  return JSON.stringify(JSON.parse(text));
+}
+
+function detectEditorLanguage(text) {
+  return isJsonText(text) ? "json" : "plaintext";
 }
 
 function setEditorValue(editor, value, language) {
@@ -206,14 +246,6 @@ function setEditorValue(editor, value, language) {
     editor.setValue(value);
   }
   setLanguage(editor, language);
-}
-
-function preserveSelectionWhileUpdating(editor, value, language) {
-  const selection = editor.getSelection();
-  setEditorValue(editor, value, language);
-  if (selection) {
-    editor.setSelection(selection);
-  }
 }
 
 function setLanguage(editor, language) {
@@ -247,12 +279,16 @@ function decodeBase64Unicode(value) {
   }
 }
 
-function countLines(text) {
-  const trimmed = text.trim();
-  if (!trimmed) {
-    return 0;
-  }
-  return trimmed.split(/\r?\n/).length;
+function updateJsonButtons() {
+  toggleJsonButtons("decodeInput", isJsonText(decodeInputEditor.getValue()));
+  toggleJsonButtons("decodeOutput", isJsonText(decodeOutputEditor.getValue()));
+  toggleJsonButtons("encodeInput", isJsonText(encodeInputEditor.getValue()));
+  toggleJsonButtons("encodeOutput", isJsonText(encodeOutputEditor.getValue()));
+}
+
+function toggleJsonButtons(prefix, enabled) {
+  document.getElementById(`${prefix}FormatButton`).disabled = !enabled;
+  document.getElementById(`${prefix}MinifyButton`).disabled = !enabled;
 }
 
 function syncPageFromHash() {

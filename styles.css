@@ -112,6 +112,11 @@ body {
   flex-wrap: wrap;
 }
 
+.editor-tools {
+  display: flex;
+  gap: 8px;
+}
+
 h2,
 p {
   margin-top: 0;
@@ -130,13 +135,31 @@ button {
   color: var(--text);
   cursor: pointer;
   font: inherit;
-  transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+  transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
 }
 
 button:hover {
   transform: translateY(-1px);
   background: rgba(255, 255, 255, 0.92);
   border-color: rgba(60, 49, 29, 0.28);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.icon-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.86rem;
 }
 
 .status {
