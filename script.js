@@ -11,19 +11,8 @@ const encodePage = document.getElementById("encodePage");
 const decodeNav = document.getElementById("decodeNav");
 const encodeNav = document.getElementById("encodeNav");
 
-const sampleHeader = '=?UTF-8?B?WyJidHNfcG93ZXJhdHRvcm5leV9hY2Nlc3Nfd29ya193aXRoX3Bvd2VyX2F0dG9ybmV5IiwiYnRzX3Nob3BwaW5nX2NhcnRzX2FwcHJvdmluZyIsImJ0c19mdWxsX2FzcF9uYV9zZWxsX2N5Y2xlIiwidW1hX2F1dGhvcml6YXRpb24iLCJvZmZsaW5lX2FjY2VzcyJd?=';
 const mimePrefix = "=?UTF-8?B?";
 const mimeSuffix = "?=";
-
-document.getElementById("decodePasteButton").addEventListener("click", () => pasteInto(decodeInput, handleDecodeInput));
-document.getElementById("decodeSampleButton").addEventListener("click", loadSample);
-document.getElementById("decodeClearButton").addEventListener("click", clearDecode);
-document.getElementById("decodeCopyButton").addEventListener("click", () => copyText(decodeOutput.value, decodeStatus, decodeCounter, countRolesGuess(decodeOutput.value)));
-
-document.getElementById("encodePasteButton").addEventListener("click", () => pasteInto(encodeInput, handleEncodeInput));
-document.getElementById("beautifyButton").addEventListener("click", beautifyJsonInput);
-document.getElementById("encodeClearButton").addEventListener("click", clearEncode);
-document.getElementById("encodeCopyButton").addEventListener("click", () => copyText(encodeOutput.value, encodeStatus, encodeCounter, countRolesGuess(encodeInput.value)));
 
 decodeInput.addEventListener("input", handleDecodeInput);
 decodeInput.addEventListener("paste", () => setTimeout(handleDecodeInput, 0));
@@ -46,8 +35,8 @@ function handleDecodeInput() {
 
   try {
     const parsed = decodeRoles(normalized);
-    decodeOutput.value = parsed.roles.join("\n");
-    renderState(decodeStatus, decodeCounter, `Найдено ролей: ${parsed.roles.length}.`, parsed.roles.length);
+    decodeOutput.value = formatDecodedText(parsed.text);
+    renderState(decodeStatus, decodeCounter, "Декодирование выполнено.", parsed.count);
   } catch (error) {
     decodeOutput.value = "";
     renderError(decodeStatus, error.message);
@@ -64,74 +53,11 @@ function handleEncodeInput() {
   }
 
   try {
-    const roles = parseRoleInput(normalized);
-    encodeOutput.value = encodeRoles(roles);
-    renderState(encodeStatus, encodeCounter, `Заголовок собран для ${roles.length} ролей.`, roles.length);
+    encodeOutput.value = encodeText(normalized);
+    renderState(encodeStatus, encodeCounter, "Кодирование выполнено.", countRolesGuess(normalized));
   } catch (error) {
     encodeOutput.value = "";
     renderError(encodeStatus, error.message);
-  }
-}
-
-function loadSample() {
-  decodeInput.value = sampleHeader;
-  handleDecodeInput();
-}
-
-function clearDecode() {
-  decodeInput.value = "";
-  decodeOutput.value = "";
-  renderState(decodeStatus, decodeCounter, "Поля очищены.", 0);
-}
-
-function clearEncode() {
-  encodeInput.value = "";
-  encodeOutput.value = "";
-  renderState(encodeStatus, encodeCounter, "Поля очищены.", 0);
-}
-
-async function copyText(text, statusNode, counterNode, count) {
-  if (!text.trim()) {
-    renderError(statusNode, "Сначала получите результат, потом можно копировать.");
-    return;
-  }
-
-  try {
-    await navigator.clipboard.writeText(text);
-    renderState(statusNode, counterNode, "Результат скопирован в буфер обмена.", count);
-  } catch (error) {
-    renderError(statusNode, "Не удалось скопировать текст. Возможно, браузер запретил доступ к буферу.");
-  }
-}
-
-async function pasteInto(target, callback) {
-  try {
-    const text = await navigator.clipboard.readText();
-    target.value = text;
-    callback();
-  } catch (error) {
-    const statusNode = target === decodeInput ? decodeStatus : encodeStatus;
-    renderError(statusNode, "Не удалось вставить текст из буфера обмена. Вставьте вручную.");
-  }
-}
-
-function beautifyJsonInput() {
-  const normalized = encodeInput.value.trim();
-
-  if (!normalized) {
-    renderError(encodeStatus, "Сначала вставьте JSON-массив.");
-    return;
-  }
-
-  try {
-    const parsed = JSON.parse(normalized);
-    if (!Array.isArray(parsed)) {
-      throw new Error("not-array");
-    }
-    encodeInput.value = JSON.stringify(parsed, null, 2);
-    handleEncodeInput();
-  } catch (error) {
-    renderError(encodeStatus, "Beautify работает только для валидного JSON-массива.");
   }
 }
 
@@ -144,55 +70,26 @@ function decodeRoles(rawInput) {
 
   const base64Body = extractBase64(normalized);
   const decodedText = decodeBase64Unicode(base64Body);
-  let roles;
+  let parsedJson = null;
 
   try {
-    roles = JSON.parse(decodedText);
+    parsedJson = JSON.parse(decodedText);
   } catch (error) {
-    throw new Error("После декодирования получился невалидный JSON.");
+    return {
+      text: decodedText,
+      count: countRolesGuess(decodedText),
+    };
   }
 
-  if (!Array.isArray(roles) || !roles.every((item) => typeof item === "string")) {
-    throw new Error("Ожидался JSON-массив строк с ролями.");
-  }
-
-  return { roles };
+  return {
+    text: JSON.stringify(parsedJson, null, 2),
+    count: Array.isArray(parsedJson) ? parsedJson.length : countRolesGuess(decodedText),
+  };
 }
 
-function encodeRoles(roles) {
-  const json = JSON.stringify(roles);
-  const base64 = encodeBase64Unicode(json);
+function encodeText(text) {
+  const base64 = encodeBase64Unicode(text);
   return `${mimePrefix}${base64}${mimeSuffix}`;
-}
-
-function parseRoleInput(rawInput) {
-  const normalized = rawInput.trim();
-
-  if (!normalized) {
-    throw new Error("Поле ввода пустое.");
-  }
-
-  if (normalized.startsWith("[")) {
-    let parsed;
-    try {
-      parsed = JSON.parse(normalized);
-    } catch (error) {
-      throw new Error("JSON-массив ролей не удалось разобрать.");
-    }
-
-    if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === "string")) {
-      throw new Error("JSON должен быть массивом строк.");
-    }
-
-    return uniqueRoles(parsed);
-  }
-
-  return uniqueRoles(
-    normalized
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean)
-  );
 }
 
 function extractBase64(value) {
@@ -202,20 +99,6 @@ function extractBase64(value) {
   }
 
   return value;
-}
-
-function uniqueRoles(roles) {
-  const seen = new Set();
-  const result = [];
-
-  for (const role of roles) {
-    if (!seen.has(role)) {
-      seen.add(role);
-      result.push(role);
-    }
-  }
-
-  return result;
 }
 
 function encodeBase64Unicode(value) {
@@ -268,6 +151,14 @@ function countRolesGuess(text) {
   }
 
   return normalized.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).length;
+}
+
+function formatDecodedText(text) {
+  try {
+    return JSON.stringify(JSON.parse(text), null, 2);
+  } catch (error) {
+    return text;
+  }
 }
 
 function syncPageFromHash() {
