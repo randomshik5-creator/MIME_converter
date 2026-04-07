@@ -2,9 +2,7 @@ const mimePrefix = "=?UTF-8?B?";
 const mimeSuffix = "?=";
 
 const decodeStatus = document.getElementById("decodeStatus");
-const decodeCounter = document.getElementById("decodeCounter");
 const encodeStatus = document.getElementById("encodeStatus");
-const encodeCounter = document.getElementById("encodeCounter");
 const decodePage = document.getElementById("decodePage");
 const encodePage = document.getElementById("encodePage");
 const decodeNav = document.getElementById("decodeNav");
@@ -83,14 +81,14 @@ function handleDecodeInput() {
 
   if (!normalized) {
     setEditorValue(decodeOutputEditor, "", "plaintext");
-    renderState(decodeStatus, decodeCounter, "Вставьте MIME слева. Справа появится декодированный текст.", 0);
+    renderState(decodeStatus, "Вставьте MIME слева. Справа появится декодированный текст.");
     return;
   }
 
   try {
     const result = decodeMimeToText(normalized);
     setEditorValue(decodeOutputEditor, result.text, result.language);
-    renderState(decodeStatus, decodeCounter, "Декодирование выполнено.", result.count);
+    renderState(decodeStatus, "Декодирование выполнено.");
   } catch (error) {
     setEditorValue(decodeOutputEditor, "", "plaintext");
     renderError(decodeStatus, error.message);
@@ -102,7 +100,7 @@ function handleEncodeInput() {
 
   if (!normalized.trim()) {
     setEditorValue(encodeOutputEditor, "", "plaintext");
-    renderState(encodeStatus, encodeCounter, "Вставьте текст слева. Справа появится MIME.", 0);
+    renderState(encodeStatus, "Вставьте текст слева. Справа появится MIME.");
     return;
   }
 
@@ -115,7 +113,7 @@ function handleEncodeInput() {
     }
 
     setEditorValue(encodeOutputEditor, encodeText(inputText), "plaintext");
-    renderState(encodeStatus, encodeCounter, "Кодирование выполнено.", countLines(inputText));
+    renderState(encodeStatus, "Кодирование выполнено.");
   } catch (error) {
     setEditorValue(encodeOutputEditor, "", "plaintext");
     renderError(encodeStatus, error.message);
@@ -141,13 +139,13 @@ function moveEncodeOutputToDecodeInput() {
 function clearDecodeFields() {
   setEditorValue(decodeInputEditor, "", "plaintext");
   setEditorValue(decodeOutputEditor, "", "plaintext");
-  renderState(decodeStatus, decodeCounter, "Поля очищены.", 0);
+  renderState(decodeStatus, "Поля очищены.");
 }
 
 function clearEncodeFields() {
   setEditorValue(encodeInputEditor, "", "plaintext");
   setEditorValue(encodeOutputEditor, "", "plaintext");
-  renderState(encodeStatus, encodeCounter, "Поля очищены.", 0);
+  renderState(encodeStatus, "Поля очищены.");
 }
 
 function decodeMimeToText(rawInput) {
@@ -274,10 +272,9 @@ function layoutEditors() {
   }
 }
 
-function renderState(statusNode, counterNode, message, count) {
+function renderState(statusNode, message) {
   statusNode.textContent = message;
   statusNode.classList.remove("error");
-  counterNode.textContent = `Строк: ${count}`;
 }
 
 function renderError(statusNode, message) {

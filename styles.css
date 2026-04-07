@@ -139,18 +139,13 @@ button:hover {
   border-color: rgba(60, 49, 29, 0.28);
 }
 
-.status,
-.counter {
+.status {
   color: var(--muted);
   margin-bottom: 0;
 }
 
 .status.error {
   color: var(--danger);
-}
-
-.counter {
-  font-variant-numeric: tabular-nums;
 }
 
 .editor {
