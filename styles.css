@@ -268,7 +268,7 @@ html.theme-space body .stars-near {
 }
 
 .sun {
-  left: 16%;
+  left: 12%;
   top: 84%;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.8);
@@ -278,14 +278,14 @@ html.theme-space body .stars-near {
 
 body.theme-light .sun,
 html.theme-light body .sun {
-  left: 18%;
+  left: 12%;
   top: 24%;
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }
 
 .moon {
-  left: 82%;
+  left: 88%;
   top: 22%;
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
@@ -320,7 +320,7 @@ html.theme-light body .sun {
 
 body.theme-light .moon,
 html.theme-light body .moon {
-  left: 74%;
+  left: 82%;
   top: 84%;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.8);
@@ -340,7 +340,7 @@ html.theme-space body .ground {
 body.theme-space .moon,
 html.theme-space body .moon {
   left: auto;
-  right: 6%;
+  right: 2%;
   top: 13%;
   width: 98px;
   height: 98px;
@@ -944,7 +944,7 @@ button:focus-visible {
 
   body.theme-space .moon,
   html.theme-space body .moon {
-    right: 8%;
+    right: 3%;
     top: 11%;
     width: 76px;
     height: 76px;
