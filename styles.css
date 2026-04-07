@@ -1,26 +1,26 @@
 :root {
-  --bg: #12161d;
-  --bg-accent: #1f2733;
-  --card: rgba(24, 30, 40, 0.88);
-  --text: #edf3ff;
-  --muted: #9ba8bd;
-  --line: rgba(180, 197, 222, 0.14);
-  --primary: #f08a5d;
-  --danger: #ff8d7a;
-  --shadow: 0 24px 60px rgba(3, 8, 18, 0.38);
+  --bg: #10161d;
+  --bg-accent: #16202a;
+  --card: rgba(20, 29, 38, 0.9);
+  --text: #eef6ff;
+  --muted: #97a8ba;
+  --line: rgba(143, 186, 216, 0.18);
+  --primary: #1fa2ff;
+  --danger: #ff7f8f;
+  --shadow: 0 24px 60px rgba(4, 10, 18, 0.42);
   --radius: 24px;
 }
 
 body.theme-light {
-  --bg: #f3efe5;
-  --bg-accent: #e4d6b8;
-  --card: rgba(255, 250, 241, 0.9);
-  --text: #1e1d1a;
-  --muted: #5b584f;
-  --line: rgba(60, 49, 29, 0.15);
-  --primary: #aa3f22;
-  --danger: #8f3118;
-  --shadow: 0 24px 60px rgba(65, 46, 23, 0.12);
+  --bg: #eff6fb;
+  --bg-accent: #dbe9f3;
+  --card: rgba(248, 252, 255, 0.92);
+  --text: #173042;
+  --muted: #5e7588;
+  --line: rgba(84, 138, 177, 0.18);
+  --primary: #167ccf;
+  --danger: #d4576b;
+  --shadow: 0 24px 60px rgba(24, 69, 104, 0.12);
 }
 
 * {
@@ -72,7 +72,7 @@ body.theme-light {
   padding: 12px 18px;
   border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   text-decoration: none;
   transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
@@ -80,13 +80,13 @@ body.theme-light {
 
 .mode-link:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(60, 49, 29, 0.28);
+  background: rgba(31, 162, 255, 0.1);
+  border-color: rgba(31, 162, 255, 0.35);
 }
 
 .mode-link.active {
   background: var(--primary);
-  color: #fff9f0;
+  color: #f7fbff;
   border-color: transparent;
 }
 
@@ -156,7 +156,7 @@ button {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   cursor: pointer;
   font: inherit;
@@ -165,8 +165,8 @@ button {
 
 button:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(31, 162, 255, 0.1);
+  border-color: rgba(31, 162, 255, 0.35);
 }
 
 button:disabled {
@@ -213,11 +213,11 @@ button:disabled {
   overflow: hidden;
   border-radius: 18px;
   border: 1px solid var(--line);
-  background: rgba(12, 17, 24, 0.85);
+  background: rgba(11, 17, 24, 0.94);
 }
 
 body.theme-light .editor {
-  background: rgba(255, 253, 248, 0.92);
+  background: rgba(252, 254, 255, 0.96);
 }
 
 .mode-link:focus,
