@@ -189,6 +189,16 @@ button:disabled {
   font-size: 0.86rem;
 }
 
+.tool-icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .theme-toggle {
   width: 44px;
   height: 44px;
