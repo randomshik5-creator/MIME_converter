@@ -12,18 +12,19 @@ let decodeInputEditor;
 let decodeOutputEditor;
 let encodeInputEditor;
 let encodeOutputEditor;
+const monacoBaseUrl = new URL("./vendor/monaco/vs/", window.location.href).toString();
 
 require.config({
   paths: {
-    vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs",
+    vs: "./vendor/monaco/vs",
   },
 });
 
 window.MonacoEnvironment = {
   getWorkerUrl() {
     return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-      self.MonacoEnvironment = { baseUrl: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/' };
-      importScripts('https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/base/worker/workerMain.min.js');
+      self.MonacoEnvironment = { baseUrl: ${JSON.stringify(monacoBaseUrl)} };
+      importScripts(${JSON.stringify(`${monacoBaseUrl}base/worker/workerMain.js`)});
     `)}`;
   },
 };
